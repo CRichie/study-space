@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: study
+      POSTGRES_USER: study
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请设置 POSTGRES_PASSWORD}
+    volumes:
+      - study_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U study -d study"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://study:${POSTGRES_PASSWORD}@db:5432/study
+      HOST: 0.0.0.0
+      PORT: 3000
+      APP_TIMEZONE: Asia/Shanghai
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      EMAIL_MODE: tencent
+      EMAIL_CODE_SECRET: ${EMAIL_CODE_SECRET:?请设置 EMAIL_CODE_SECRET}
+      TENCENT_SECRET_ID: ${TENCENT_SECRET_ID:?请设置 TENCENT_SECRET_ID}
+      TENCENT_SECRET_KEY: ${TENCENT_SECRET_KEY:?请设置 TENCENT_SECRET_KEY}
+      TENCENT_SES_FROM: ${TENCENT_SES_FROM:?请设置 TENCENT_SES_FROM}
+      TENCENT_SES_TEMPLATE_ID: ${TENCENT_SES_TEMPLATE_ID:?请设置 TENCENT_SES_TEMPLATE_ID}
+      TENCENT_SES_REGION: ${TENCENT_SES_REGION:-ap-guangzhou}
+    ports:
+      - "127.0.0.1:3000:3000"
+volumes:
+  study_db:
